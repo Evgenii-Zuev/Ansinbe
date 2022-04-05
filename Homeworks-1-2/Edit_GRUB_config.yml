@@ -1,0 +1,19 @@
+---
+- name: PlayBook Change GRUB
+  hosts: linux1
+  become: yes
+
+  vars:
+    dest_file: /home/user/default/grub
+
+  tasks:
+  - name:  Edit String in File
+    lineinfile:
+      path: "{{ dest_file }}"
+      regexp: 'GRUB_CMDLINE_LINUX="crashkernel=auto rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"'
+      insertafter: '^#GRUB_CMDLINE_LINUX="crashkernel=auto rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quie$
+      line: GRUB_CMDLINE_LINUX="crashkernel=auto rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet net.ifna$
+
+  - name:  Remake GRUB
+    shell: grub2-mkconfig
+    register: result
