@@ -1,2 +1,2 @@
 # Ansinbe
-# See README in task folder
+# See README in Homeworks folder
