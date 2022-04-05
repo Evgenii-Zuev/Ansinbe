@@ -1,0 +1,31 @@
+---
+- name: Install Apache and upload my Web Site
+  hosts: all
+  become: yes
+
+  vars:
+    cont: Welcome to my web server!!!
+    destin_file: /var/www/html/index.html
+
+  tasks:
+  - copy:
+      content: "{{ cont }}"
+      dest: "{{ destin_file }}"
+
+  - name: Install Apache Web Server
+    yum: name=httpd state=latest
+
+  - name: Start My Web Server and make Enabled
+    notify: Restart Apache
+    service: name=httpd state=started enabled=yes
+
+  - name: Setup Firewall Rules HTTP
+    firewalld:  service=http permanent=yes state=enabled
+
+  - name: ReStart Firewalld
+    service: name=httpd state=restarted enabled=yes
+
+  handlers:
+  - name: Restart Apache
+    service: name=httpd state=restarted
+...

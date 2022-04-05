@@ -1,0 +1,2 @@
+[ALL_LINUX]
+linux1   ansible_host=node1.example.com

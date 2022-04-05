@@ -1,0 +1,33 @@
+---
+- name: Install Apache and upload my Web Site
+  hosts: all
+  become: yes
+
+  vars:
+    source_file: ./MyWebSite/index.html
+    destin_file:  /var/www/html
+
+  tasks:
+  - name: Install Apache Web Server
+    yum: name=httpd state=latest
+
+  - name: Copy MyHomePage to Servers
+    copy: src={{ source_file }} dest={{ destin_file }} mode=0555
+    notify: Restart Apache
+
+  - name: Start My Web Server and make Enabled
+    service: name=httpd state=started enabled=yes
+
+  - name: Enable HTTP on Firewall
+    shell: systemctl start firewalld
+
+  - name: Enable HTTP on Firewall
+    shell: systemctl enable firewalld
+
+  - name: Enable HTTP on Firewall
+    shell: /usr/bin/firewall-cmd --zone=public --add-service=http --permanent
+
+  handlers:
+  - name: Restart Apache
+    service: name=httpd state=restarted
+...

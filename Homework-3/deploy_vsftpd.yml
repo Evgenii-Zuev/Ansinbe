@@ -1,0 +1,96 @@
+---
+- name: Install vsFTPd and setting it
+  hosts: all
+  become: yes
+
+  vars:
+    listen: listen=YES
+    anonymous_enable: anonymous_enable=YES
+    write_enable: write_enable=YES
+    anon_upload_enable: anon_upload_enable=YES
+    anon_mkdir_write_enable: anon_mkdir_write_enable=YES
+    pasv_min_port: pasv_min_port=40900
+    pasv_max_port: pasv_max_port=40999
+
+  tasks:
+  - name: Install vsftpd
+    yum: name=vsftpd state=latest
+
+  - lineinfile:
+      dest: /etc/vsftpd/vsftpd.conf
+      state: absent
+      regexp: ".*"
+
+  - name: add lines
+    lineinfile:
+      dest: /etc/vsftpd/vsftpd.conf
+      line: '{{ item }}'
+    with_items:
+      - "{{ listen }}"
+      - "{{ anonymous_enable }}"
+      - "{{ write_enable }}"
+      - "{{ anon_upload_enable }}"
+      - "{{ anon_mkdir_write_enable }}"
+      - "{{ pasv_min_port }}"
+      - "{{ pasv_max_port }}"
+
+  - name: Create Directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: ftp
+      group: ftp
+      mode: 0555
+    loop:
+      - '/var/ftp'
+      - '/var/ftp/pub'
+
+  - name: Create Upload Dir
+    file:
+      path: "/var/ftp/pub/upload"
+      state: directory
+      owner: ftp
+      group: ftp
+      mode: 0766
+
+  - name: ReStart FTP
+    service: name=vsftpd state=restarted enabled=yes
+
+  - name: Install Firewalld
+    yum: name=firewalld state=latest
+
+  - name: Security Settings
+    firewalld:
+      port: "{{ item }}"
+      permanent: true
+      state: enabled
+    loop: [ '20-21/tcp', '40900-40999/tcp' ]
+
+  - name: Install'd policycoreutils-python
+    yum: name=policycoreutils-python state=latest
+
+  - name: Put SELinux in permissive mode
+    notify: Restart System
+    selinux:
+      policy: targeted
+      state: permissive
+
+  - ignore_errors: yes
+    shell: |
+      semanage fcontext -a -t public_content_rw_t /var/ftp
+      restorecon -Rvv /var/ftp
+      setsebool -P ftpd_anon_write 1
+
+  - name: ReStart FTP
+    service: name=vsftpd state=restarted enabled=yes
+
+  handlers:
+  - name: Restart System
+    reboot:
+      reboot_timeout: 200
+  - ignore_errors: yes
+    shell: |
+      semanage fcontext -a -t public_content_rw_t /var/ftp
+      restorecon -Rvv /var/ftp
+      setsebool -P ftpd_anon_write 1
+...

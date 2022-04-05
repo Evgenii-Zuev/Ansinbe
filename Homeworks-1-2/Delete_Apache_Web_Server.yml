@@ -1,0 +1,17 @@
+---
+- name: Delete Apache and upload my Web Site
+  hosts: all
+  become: yes
+
+  tasks:
+  - name: Disable HTTP service on firewall
+    shell: /usr/bin/firewall-cmd --zone=public --remove-service=http --permanent
+
+  - name: Delete Apache Web Server
+    yum: name=httpd state=absent
+
+  - name: Delete index.html
+    file:
+      path: /var/www/html/index.html
+      state:  absent
+...
